@@ -40,6 +40,23 @@ class AuthController extends Controller
             return response('Error creating user', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public function checkAuthStatus()
+    {if (Auth::check()) {
+        $user = Auth::user();
+        return response([
+            'isLogged' => true,
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+            ]
+        ], Response::HTTP_OK);
+    } else {
+        return response(['isLogged' => false], Response::HTTP_UNAUTHORIZED);
+    }
+    }
+
     public function recoverPassword(Request $request){
         $request->validate([
             'email' =>'required|email|exists:users',
@@ -49,17 +66,17 @@ class AuthController extends Controller
 
         $token = Password::createToken($user);
 
-        Mail::to($request->email)->queue(new RecoverPasswordMailable($token));
+        Mail::to($request->email)->queue(new RecoverPasswordMailable($token, $request->email));
 
         return response($user, Response::HTTP_OK);
     }
 
-    
+
     public function updatePassword(Request $request){
         $request->validate([
             'token' => 'required|string',
             'email' => 'required|email|exists:users,email',
-            'password' => 'required|string|min:8|cofirmed',
+            'password' => 'required|string|min:8',
         ]);
 
         $status = Password::getRepository()->exists(
@@ -67,7 +84,7 @@ class AuthController extends Controller
             $request->token
         );
 
-        if ($status === Password::PASSWORD_RESET) {
+        if ($status) {
             $user->password = Hash::make($request->password);
             $user->save();     
             return response(['message' => 'Password updated'], Response::HTTP_OK);
@@ -86,7 +103,15 @@ class AuthController extends Controller
             $user = Auth::user();
             $token = $user->createToken('token')->plainTextToken;
             $cookie = cookie('cookie_token', $token, 60 * 24);
-            return response(['token'=>$token], Response::HTTP_OK)->withoutCookie($cookie);
+
+            return response()->json([
+                'user' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role
+                ],
+                'token' => $token
+            ], Response::HTTP_OK)->withCookie($cookie);
         }
         else {
             return response(['message'=> 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
@@ -99,26 +124,29 @@ class AuthController extends Controller
     }
 
     public function allEmployees(Request $request){
-        $employees = User::where('role', 'employee')->select('name', 'email')->get();
+        $employees = User::where('role', 'employee')->select('name', 'email', 'id')->get();
 
         return response($employees, Response::HTTP_OK);
     }
 
-    public function employeeTasks(Request $request){
-        $userID = $request->query('user');
 
+    public function employeeTasks(Request $request){
+        $userID = $request->user()->id;
+    
         $user = User::where('role', 'employee')->where('id', $userID);
         $user->select('id', 'name', 'email');
         $user->with('tasks');
     
         return response($user->paginate()->appends($request->query()), Response::HTTP_OK);
     }
+    
 
     public function allEmployeesTasks(Request $request){
 
-        $users = User::where('role', 'employee');
-        $users = $users->with('tasks');
+    $users = User::whereHas('tasks')->where('role', 'employee');
+    $users = $users->with('tasks');
     
-        return response($users->paginate()->appends($request->query()), Response::HTTP_OK);
-    }
+    return response($users->paginate()->appends($request->query()), Response::HTTP_OK);
+}
+
 }

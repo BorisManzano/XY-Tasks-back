@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CommentController extends Controller
 {
-   
+
 
   public function newComment(Request $request)
 {
@@ -18,7 +18,7 @@ class CommentController extends Controller
     $request->validate([
         'comment' => 'required|string',
         'task_id' => 'required|exists:tasks,id', 
-        'files.*' => 'file|max:2048',
+        'files.*' => 'file|mimes:pdf,jpg,jpeg,png|max:2048',
     ]);
 
     $comment = new Comment();
@@ -29,17 +29,21 @@ class CommentController extends Controller
 
     if ($request->hasFile('files')) {
         foreach ($request->file('files') as $file) {
-            $attachment = new Attachment();
-            $attachment->comment_id = $comment->id;
-            $attachment->filename = $file->getClientOriginalName(); 
-            $attachment->mime_type = $file->getClientMimeType(); 
-            $attachment->path = $file->store('attachments'); 
-            $attachment->save();
-        }
-    }
+            $filename = $file->getClientOriginalName();
+            $path = $file->store('public/attachments');
 
-    return response(['message' =>'Successful change'], Response::HTTP_OK);
-  }
+            $attachment = new Attachment();
+            $attachment->filename = $filename;
+            $attachment->path = $path;
+            $attachment->mime_type = $file->getClientMimeType();
+            $attachment->comment_id = $comment->id;
+            $attachment->save();
+            echo($attachment);
+          }
+        }
+        
+        return response(['message' =>'Comment with files attached successfully'], Response::HTTP_OK);
+}
 
 
   public function deleteComment(Comment $comment)

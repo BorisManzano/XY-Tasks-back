@@ -89,4 +89,15 @@ class TaskController extends Controller
         return response($task, Response::HTTP_OK);
     }
 
+    // public function allTasks(){
+
+    //     if (Auth::check()) {
+    //         $userId = Auth::id(); $tasks = Task::all();
+    //         return response()->json(['tasks' => $tasks], 200);
+    //     } else {
+    //         return response(['message' => 'unauthorized locooooo'], Response::HTTP_UNAUTHORIZED);
+    //     }
+    
+
+    // }
 }

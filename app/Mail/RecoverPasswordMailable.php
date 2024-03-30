@@ -15,9 +15,11 @@ class RecoverPasswordMailable extends Mailable
     use Queueable, SerializesModels;
 
     public $token;
+    public $email;
  
-    public function __construct($token)
+    public function __construct($token, $email)
     {
+        $this->email = $email;
         $this->token = $token;
     }
 
@@ -44,7 +46,7 @@ class RecoverPasswordMailable extends Mailable
         return $this->subject('Restablecer contraseña')
                     ->view('emails.recoverPassword')
                     ->with([
-                        'resetUrl' => 'http://localhost:8080/updatePassword?token=' . $this->token,
+                        'resetUrl' => 'http://localhost:8080/updatePassword?token=' . $this->token . '&email=' . urlencode($this->email),
                     ]);
     }
 

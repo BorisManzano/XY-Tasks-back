@@ -9,7 +9,7 @@ class Attachment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['comment_id', 'file_path'];
+    protected $fillable = ['filename', 'path', 'mime_type', 'comment_id'];
 
 
     public function comment()
