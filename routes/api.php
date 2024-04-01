@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Route;
 Route::post('login', [AuthController::class, 'login']);
 Route::post('recoverPassword', [AuthController::class,'recoverPassword']);
 Route::put('updatePassword', [AuthController::class, 'updatePassword']);
-Route::get('allComments/{task_id}', [CommentController::class, 'allComments' ]);
 
 Route::group(['middleware' => ['auth:sanctum']], function(){
     
@@ -23,6 +22,7 @@ Route::group(['middleware' => ['auth:sanctum']], function(){
     Route::get('allEmployeesTasks', [AuthController::class, 'allEmployeesTasks']);
     Route::get('employeeTasks', [AuthController::class, 'employeeTasks']);
     Route::delete('deleteComment/{comment}', [CommentController::class, 'deleteComment'])->middleware('can:delete,comment');
+    Route::get('allComments/{task_id}', [CommentController::class, 'allComments' ]);
 });
 
 Route::group(['middleware' => ['auth:sanctum', 'super_admin']], function(){
