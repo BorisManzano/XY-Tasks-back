@@ -46,7 +46,7 @@ class RecoverPasswordMailable extends Mailable
         return $this->subject('Restablecer contraseña')
                     ->view('emails.recoverPassword')
                     ->with([
-                        'resetUrl' => 'http://localhost:8080/updatePassword?token=' . $this->token . '&email=' . urlencode($this->email),
+                        'resetUrl' => 'http://localhost:8080/updatePassword?token=' . $this->token . '&email=' . rawurlencode($this->email),
                     ]);
     }
 

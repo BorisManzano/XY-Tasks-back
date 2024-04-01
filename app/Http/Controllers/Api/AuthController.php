@@ -28,38 +28,22 @@ class AuthController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->role = $request->role;
-
+        
         if ($user->save()) {
-
+            
             $token = Password::createToken($user);
-
-            Mail::to($request->email)->queue(new WelcomeMailable($token));
+            
+            Mail::to($request->email)->queue(new WelcomeMailable($token, $request->email));
             return response($user, Response::HTTP_CREATED);
-
+            
         } else {
             return response('Error creating user', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-    public function checkAuthStatus()
-    {if (Auth::check()) {
-        $user = Auth::user();
-        return response([
-            'isLogged' => true,
-            'user' => [
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ]
-        ], Response::HTTP_OK);
-    } else {
-        return response(['isLogged' => false], Response::HTTP_UNAUTHORIZED);
-    }
-    }
-
+    
     public function recoverPassword(Request $request){
         $request->validate([
-            'email' =>'required|email|exists:users',
+            'email' =>'required|email|exists:users|max: 255',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -71,27 +55,46 @@ class AuthController extends Controller
         return response($user, Response::HTTP_OK);
     }
 
-
     public function updatePassword(Request $request){
         $request->validate([
             'token' => 'required|string',
             'email' => 'required|email|exists:users,email',
             'password' => 'required|string|min:8',
         ]);
-
+    
         $status = Password::getRepository()->exists(
             $user = User::where('email', $request->email)->first(),
             $request->token
         );
-
+    
         if ($status) {
             $user->password = Hash::make($request->password);
             $user->save();     
             return response(['message' => 'Password updated'], Response::HTTP_OK);
         }
-
+        
         return response(['error' => 'Invalid token'], Response::HTTP_UNAUTHORIZED);
     }
+
+    public function checkAuthStatus()
+    {if (Auth::check()) {
+        $user = Auth::user();
+        return response([
+            'isLogged' => true,
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'id' => $user->id,
+            ]
+        ], Response::HTTP_OK);
+    } else {
+        return response(['isLogged' => false], Response::HTTP_UNAUTHORIZED);
+    }
+    }
+
+
+
 
     public function login(Request $request){
         $credentials = $request->validate([
@@ -108,7 +111,9 @@ class AuthController extends Controller
                 'user' => [
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role
+                    'role' => $user->role,
+                    'id' => $user->id
+
                 ],
                 'token' => $token
             ], Response::HTTP_OK)->withCookie($cookie);

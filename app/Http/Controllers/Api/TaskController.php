@@ -68,36 +68,28 @@ class TaskController extends Controller
     public function changeStatus(Request $request){
         $request->validate([
             'id' => 'required|integer',
-           'status' => ['required', 'string', 'max:255', Rule::in(['Pendiente', 'En proceso', 'Bloqueado', 'Completado'])],
+            'status' => ['required', 'string', 'max:255', Rule::in(['Pendiente', 'En proceso', 'Bloqueado', 'Completado'])],
         ]);
 
         $userId = Auth::id();
         $user= User::find($userId);
         $task = Task::find($request->id);
-        
+
         if($task && ($task->user_id == $userId || $user->isSuperAdmin())){
             $task->status = $request->status;
+
+            if ($request->status == 'Completado') {
+                $task->completed_at = now();
+            } else {
+                $task->completed_at = null;
+            }
+
             $task->save();
 
             return response($task, Response::HTTP_OK);
         }
         else {
-            return response(['message' => 'unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return response(['message' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }
-
-
-        return response($task, Response::HTTP_OK);
     }
-
-    // public function allTasks(){
-
-    //     if (Auth::check()) {
-    //         $userId = Auth::id(); $tasks = Task::all();
-    //         return response()->json(['tasks' => $tasks], 200);
-    //     } else {
-    //         return response(['message' => 'unauthorized locooooo'], Response::HTTP_UNAUTHORIZED);
-    //     }
-    
-
-    // }
 }

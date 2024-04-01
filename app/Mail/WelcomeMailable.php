@@ -15,17 +15,19 @@ class WelcomeMailable extends Mailable
     use Queueable, SerializesModels;
 
     public $token;
+    public $email;
  
-    public function __construct($token)
+    public function __construct($token, $email)
     {
         $this->token = $token;
+        $this->email = $email;
     }
 
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address('borismanzano010@gmail.com', 'Boris Manzano'),
+            from: new Address('xy_tasks@gmail.com', 'XY Tasks'),
             subject: 'Configura tu cuenta',
         );
     }
@@ -42,11 +44,11 @@ class WelcomeMailable extends Mailable
     public function build()
     {
         return $this->subject('Configura tu cuenta')
-                    ->view('emails.Welcome')
                     ->with([
-                        'resetUrl' => 'http://localhost:8080/updatePassword?token=' . $this->token,
+                        'resetUrl' => 'http://localhost:8080/updatePassword?token=' . $this->token . '&email=' . rawurlencode($this->email),
                     ]);
     }
+    
 
 
     public function attachments(): array
